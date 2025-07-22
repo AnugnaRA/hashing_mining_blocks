@@ -18,27 +18,26 @@ def mine_block(k, prev_hash, transactions):
         print("mine_block expects positive integer")
         return b'\x00'
 
-     # Prepare the initial message from prev_hash + all transaction lines
-    m = hashlib.sha256()
-    m.update(prev_hash)
-    for tx in transactions:
-        m.update(tx.encode('utf-8'))
-    base = m.digest()
-
-    target_suffix = '0' * k  # binary string we want at the end
-
+    target_suffix = '0' * k
     nonce_int = 0
+
     while True:
+        sha = hashlib.sha256()
+        sha.update(prev_hash)
+
+        for tx in transactions:
+            sha.update(tx.encode('utf-8'))
+
         nonce_bytes = str(nonce_int).encode('utf-8')
-        full_hash = hashlib.sha256(base + nonce_bytes).hexdigest()
-        full_bin = bin(int(full_hash, 16))[2:].zfill(
-            256)  # convert to 256-bit binary
-        if full_bin.endswith(target_suffix):
-            nonce = nonce_bytes
-            break
+        sha.update(nonce_bytes)
+
+        hash_hex = sha.hexdigest()
+        hash_bin = bin(int(hash_hex, 16))[2:].zfill(256)
+
+        if hash_bin.endswith(target_suffix):
+            return nonce_bytes
+
         nonce_int += 1
-    assert isinstance(nonce, bytes), 'nonce should be of type bytes'
-    return nonce
 
 
 def get_random_lines(filename, quantity):
